@@ -42,6 +42,10 @@
 
 // One include per fix, alphabetical, as they are ported:
 // (none yet)
+#include "fixes/abstract_entity.h"
+#include "fixes/beam_crash.h"
+#include "fixes/hammer_id.h"
+#include "fixes/input_activator_crash.h"
 
 GameFixesPlugin g_Plugin;
 SOURCE2MOD_EXPOSE(PLUGIN_NAME, g_Plugin);
@@ -123,6 +127,10 @@ bool GameFixesPlugin::Unload(char* error, size_t maxlen)
 std::vector<std::unique_ptr<CFix>> GameFixesPlugin::CreateFixes()
 {
     std::vector<std::unique_ptr<CFix>> fixes;
+    fixes.push_back(std::make_unique<CAbstractEntityFix>());
+    fixes.push_back(std::make_unique<CBeamCrashFix>());
+    fixes.push_back(std::make_unique<CHammerIdFix>());
+    fixes.push_back(std::make_unique<CInputActivatorCrashFix>());
     return fixes;
 }
 
