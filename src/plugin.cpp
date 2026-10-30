@@ -43,13 +43,16 @@
 // One include per fix, alphabetical, as they are ported:
 #include "fixes/abstract_entity.h"
 #include "fixes/beam_crash.h"
+#include "fixes/demo_record.h"
 #include "fixes/hammer_id.h"
 #include "fixes/input_activator_crash.h"
 #include "fixes/rampbug.h"
 #include "fixes/server_list_players.h"
 #include "fixes/slow_animation.h"
+#include "fixes/steam_ban.h"
 #include "fixes/sv_cheats.h"
 #include "fixes/team_limit.h"
+#include "fixes/voice_flood.h"
 #include "fixes/water_jump.h"
 
 GameFixesPlugin g_Plugin;
@@ -134,13 +137,16 @@ std::vector<std::unique_ptr<CFix>> GameFixesPlugin::CreateFixes()
     std::vector<std::unique_ptr<CFix>> fixes;
     fixes.push_back(std::make_unique<CAbstractEntityFix>());
     fixes.push_back(std::make_unique<CBeamCrashFix>());
+    fixes.push_back(std::make_unique<CDemoRecordFix>());
     fixes.push_back(std::make_unique<CHammerIdFix>());
     fixes.push_back(std::make_unique<CInputActivatorCrashFix>());
     fixes.push_back(std::make_unique<CRampbugFix>());
     fixes.push_back(std::make_unique<CServerListPlayersFix>());
     fixes.push_back(std::make_unique<CSlowAnimationFix>());
+    fixes.push_back(std::make_unique<CSteamBanFix>());
     fixes.push_back(std::make_unique<CSvCheatsFix>());
     fixes.push_back(std::make_unique<CTeamLimitFix>());
+    fixes.push_back(std::make_unique<CVoiceFloodFix>());
     fixes.push_back(std::make_unique<CWaterJumpFix>());
     return fixes;
 }
