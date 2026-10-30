@@ -46,18 +46,10 @@ const char* CDemoRecordFix::GetDescription() const
 
 bool CDemoRecordFix::Load(char* error, size_t maxlen)
 {
-    int nSlot;
-    if (!FindOffset("CServerSideClientBase::Disconnect", nSlot, error, maxlen))
-        return false;
-
-    // void CServerSideClient::Disconnect(ENetworkDisconnectionReason reason, const char* pszInternalReason): this, reason, string
-    static const Source2ModType kParams[] = { Source2ModType::Pointer, Source2ModType::Int32, Source2ModType::String };
-    const FunctionTypes types{ Source2ModType::Void, kParams, 3, true };
-
-    ISource2ModFunction* pFunction = g_pSource2ModFunctions->FromVirtualTable(g_PluginID, "engine2", "CServerSideClient", nSlot, types);
+    ISource2ModFunction* pFunction = FindFunction("CServerSideClientBase::Disconnect", error, maxlen);
     if (!pFunction)
     {
-        std::snprintf(error, maxlen, "CServerSideClient vtable not found");
+        std::snprintf(error, maxlen, "CServerSideClientBase::Disconnect not found (see the console)");
         return false;
     }
 
@@ -69,7 +61,7 @@ bool CDemoRecordFix::Load(char* error, size_t maxlen)
 
     m_nTvEnable = CVAR_IDX("tv_enable");
 
-    Log("hooked CServerSideClient::Disconnect (vtable slot %d), tv_enable is %s", nSlot,
+    Log("hooked CServerSideClient::Disconnect, tv_enable is %s",
         m_nTvEnable == SOURCE2MOD_INVALID_CONVAR_INDEX ? "not found" : (IsTvEnabled() ? "on" : "off"));
     return true;
 }

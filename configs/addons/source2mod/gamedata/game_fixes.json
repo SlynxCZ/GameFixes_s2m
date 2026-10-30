@@ -81,6 +81,18 @@
     "offsets": {
       "windows": 7,
       "linux": 8
+    },
+    "function": {
+      "this": "pointer",
+      "return": "void",
+      "params": [
+        "int32",
+        "string"
+      ],
+      "vtable": {
+        "module": "engine2",
+        "class": "CServerSideClient"
+      }
     }
   },
   "GameSystem_Think_CheckSteamBan": {

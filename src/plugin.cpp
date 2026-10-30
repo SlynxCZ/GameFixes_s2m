@@ -59,7 +59,7 @@
 GameFixesPlugin g_Plugin;
 SOURCE2MOD_EXPOSE(PLUGIN_NAME, g_Plugin);
 
-bool GameFixesPlugin::Load(PluginId id, ISource2ModAPI* api, char* error, size_t maxlen, bool late)
+bool GameFixesPlugin::Load(ISource2ModAPI* api, char* error, size_t maxlen, bool late)
 {
     SOURCE2MOD_SAVEVARS();
 
@@ -244,7 +244,7 @@ void* GameFixesPlugin::OnSource2ModQuery(const char* iface, int* ret)
     if (!iface)
         return nullptr;
 
-    if (!std::strcmp(iface, GAMEFIXES_INTERFACE_VERSION) || !std::strcmp(iface, GAMEFIXES_INTERFACE_VERSION_001))
+    if (!std::strcmp(iface, GAMEFIXES_INTERFACE_VERSION))
     {
         if (ret) *ret = SOURCE2MOD_IFACE_OK;
         return static_cast<IGameFixes*>(this);
