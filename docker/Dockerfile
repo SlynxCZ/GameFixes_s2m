@@ -38,7 +38,7 @@ RUN git config --system --add safe.directory '*'
 # steamrt image has no pip, so setup.py installs it, as in the other plugins.
 RUN git clone https://github.com/SlynxCZ/ambuild /opt/ambuild && cd /opt/ambuild && python setup.py install
 
-COPY docker/docker-entrypoint.sh ./docker-entrypoint.sh
+COPY scripts/docker-entrypoint.sh ./docker-entrypoint.sh
 RUN sed -i 's/\r$//' ./docker-entrypoint.sh && chmod +x ./docker-entrypoint.sh
 
 WORKDIR /app/source
