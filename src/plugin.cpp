@@ -41,7 +41,9 @@
 #include <string>
 
 // One include per fix, alphabetical, as they are ported:
-// (none yet)
+#include "fixes/demo_record.h"
+#include "fixes/steam_ban.h"
+#include "fixes/voice_flood.h"
 
 GameFixesPlugin g_Plugin;
 SOURCE2MOD_EXPOSE(PLUGIN_NAME, g_Plugin);
@@ -123,6 +125,9 @@ bool GameFixesPlugin::Unload(char* error, size_t maxlen)
 std::vector<std::unique_ptr<CFix>> GameFixesPlugin::CreateFixes()
 {
     std::vector<std::unique_ptr<CFix>> fixes;
+    fixes.push_back(std::make_unique<CDemoRecordFix>());
+    fixes.push_back(std::make_unique<CSteamBanFix>());
+    fixes.push_back(std::make_unique<CVoiceFloodFix>());
     return fixes;
 }
 
