@@ -41,7 +41,10 @@
 #include <string>
 
 // One include per fix, alphabetical, as they are ported:
-// (none yet)
+#include "fixes/server_list_players.h"
+#include "fixes/slow_animation.h"
+#include "fixes/sv_cheats.h"
+#include "fixes/team_limit.h"
 
 GameFixesPlugin g_Plugin;
 SOURCE2MOD_EXPOSE(PLUGIN_NAME, g_Plugin);
@@ -123,6 +126,10 @@ bool GameFixesPlugin::Unload(char* error, size_t maxlen)
 std::vector<std::unique_ptr<CFix>> GameFixesPlugin::CreateFixes()
 {
     std::vector<std::unique_ptr<CFix>> fixes;
+    fixes.push_back(std::make_unique<CServerListPlayersFix>());
+    fixes.push_back(std::make_unique<CSlowAnimationFix>());
+    fixes.push_back(std::make_unique<CSvCheatsFix>());
+    fixes.push_back(std::make_unique<CTeamLimitFix>());
     return fixes;
 }
 
