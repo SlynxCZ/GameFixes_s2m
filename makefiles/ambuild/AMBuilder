@@ -1,0 +1,31 @@
+# vim: set sts=2 ts=8 sw=2 tw=99 et ft=python:
+import os
+
+# Only one SDK is built at a time -- metamod can only load one binary per vdf,
+# and a Source2Mod plugin is loaded by name out of addons/source2mod/plugins,
+# which has the same constraint.
+for sdk_target in MMSPlugin.sdk_targets:
+  sdk = sdk_target.sdk
+  cxx = sdk_target.cxx
+
+  binary = MMSPlugin.Source2ModLibrary(builder, cxx, MMSPlugin.plugin_name, sdk)
+
+  # Everything under src/, globbed (makefiles/cmake/CMakeBuilder.cmake does the
+  # same): the fixes are ported in parallel, and a new src/fixes/<name>.cpp
+  # must not mean an edit of this file.
+  for root, dirs, files in os.walk(os.path.join(builder.sourcePath, 'src')):
+    dirs.sort()
+    for name in sorted(files):
+      if name.endswith('.cpp'):
+        binary.sources.append(os.path.join(root, name))
+
+  binary.compiler.cxxincludes += [
+    os.path.join(builder.sourcePath, 'src'),
+    os.path.join(builder.sourcePath, 'public'),
+  ]
+
+  # The game protobufs (s2sdk_protobufs() in the SDK's CMakeLists.txt).
+  Source2ModSdk.AddProtobufs(builder, binary, sdk_target)
+
+  nodes = builder.Add(binary)
+  MMSPlugin.binaries += [nodes]
