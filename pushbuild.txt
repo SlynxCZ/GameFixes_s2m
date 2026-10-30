@@ -1,1 +1,2 @@
 # One line per release: append what changed and the CI cuts the next tag.
+First Source2Mod release: the 13 fixes of GameFixes_mm ported onto the core's hooks, config (game_fixes.json) and gamedata, plus cstv_bot_quota (off by default); IGameFixes002 adds ServerListPlayersHide / Show. Built against Source2Mod plugin API 7 (needs the matching Source2Mod release).
