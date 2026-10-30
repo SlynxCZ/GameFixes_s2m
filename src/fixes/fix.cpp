@@ -64,6 +64,17 @@ Source2ModConVarHookId CFix::HookConVarChange(ConVarChangeHandler handler)
     return id;
 }
 
+Source2ModNetMessageHookId CFix::HookClientMessage(NetMessageClientHook handler)
+{
+    if (!g_pSource2ModNetworkMessages)
+        return 0;
+
+    const Source2ModNetMessageHookId id = g_pSource2ModNetworkMessages->HookClientMessage(std::move(handler));
+    if (id)
+        m_netMessageHookIds.push_back(id);
+    return id;
+}
+
 Timer* CFix::AddRepeatingTimer(float flInterval, TimerCallback callback)
 {
     Timer* pTimer = g_pSource2ModScheduler->AddTimer(flInterval, std::move(callback), TIMER_FLAG_REPEAT);
@@ -118,6 +129,10 @@ void CFix::ReleaseResources()
     for (const Source2ModEventHookId id : m_eventHookIds)
         g_pSource2ModEvents->UnhookGameEvent(id);
     m_eventHookIds.clear();
+
+    for (const Source2ModNetMessageHookId id : m_netMessageHookIds)
+        g_pSource2ModNetworkMessages->UnhookClientMessage(id);
+    m_netMessageHookIds.clear();
 
     for (const Source2ModHookId id : m_hookIds)
         g_pSource2ModHooks->Unhook(id);

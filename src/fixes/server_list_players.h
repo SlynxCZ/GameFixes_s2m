@@ -40,7 +40,10 @@
 
 #include "fix.h"
 
-class CServerListPlayersFix final : public CFix
+#include <cstdint>
+#include <unordered_set>
+
+class CServerListPlayersFix final : public CFix, public IServerListPlayersControl
 {
 public:
     const char* GetName() const override { return "server_list_players"; }
@@ -53,13 +56,18 @@ public:
     const char* GetConfigDefaults() const override
     {
         return R"json(
-        "update_interval": 5   // seconds (at least 1)
+        "update_interval": 5,  // seconds (at least 1)
+        "hide": { }            // label -> SteamID64: accounts never pushed (a hidden admin, ...)
 )json";
     }
 
     void ReadConfig(const FixConfig& config) override;
     bool Load(char* error, size_t maxlen) override;
     void Unload() override;
+
+    // IServerListPlayersControl (IGameFixes::ServerListPlayersHide / Show)
+    bool HidePlayer(uint64_t steamId64) override;
+    bool ShowPlayer(uint64_t steamId64) override;
 
 private:
     void UpdatePlayers();
@@ -69,4 +77,9 @@ private:
 
     // The game server's Steam API, usable from GameServerSteamAPIActivated on.
     bool m_bSteamAPIReady = false;
+
+    // SteamID64s left out of the push: "hide" in game_fixes.json plus what
+    // plugins add at runtime. The set is only touched from the game thread.
+    std::unordered_set<uint64_t> m_Hidden;
+    std::unordered_set<uint64_t> m_ConfigHidden;
 };

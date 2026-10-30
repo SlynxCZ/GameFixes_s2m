@@ -58,6 +58,10 @@ public:
     /// generated game_fixes.json / game_fixes.example.json (split on '\n').
     virtual const char* GetDescription() const { return ""; }
 
+    /// Whether the generated game_fixes.json starts with this fix on. True for
+    /// all of them but one that only matters on some servers.
+    virtual bool EnabledByDefault() const { return true; }
+
     /// The fix's own options and their defaults: the *members* of its block as
     /// JSON text, comments allowed, without the braces and without "enable"
     /// (the plugin adds `"enable": true` itself). Written to the admin's
@@ -124,6 +128,12 @@ protected:
     /// the name), id remembered.
     Source2ModConVarHookId HookConVarChange(ConVarChangeHandler handler);
 
+    /// g_pSource2ModNetworkMessages->HookClientMessage(): every message a client
+    /// sends the server, before the engine handles it (the message is the
+    /// protobuf; Action::Supersede drops it), id remembered. 0 when the core
+    /// cannot hook it.
+    Source2ModNetMessageHookId HookClientMessage(NetMessageClientHook handler);
+
     /// A repeating timer on game time (the scheduler's), killed when the fix is
     /// unloaded. It survives map changes. For a one-shot or a map-bound timer
     /// use g_pSource2ModScheduler->AddTimer directly and keep no pointer to it.
@@ -152,6 +162,7 @@ private:
     std::vector<Source2ModHookId> m_hookIds;
     std::vector<Source2ModEventHookId> m_eventHookIds;
     std::vector<Source2ModConVarHookId> m_conVarHookIds;
+    std::vector<Source2ModNetMessageHookId> m_netMessageHookIds;
     std::vector<Timer*> m_timers;
 };
 
@@ -167,6 +178,19 @@ public:
 
     virtual bool AllowAccount(uint64_t steamId64) = 0;
     virtual bool DisallowAccount(uint64_t steamId64) = 0;
+};
+
+/**
+ * Implemented by the server_list_players fix next to CFix, for the plugin's
+ * IGameFixes (found by name, like ISteamBanControl).
+ */
+class IServerListPlayersControl
+{
+public:
+    virtual ~IServerListPlayersControl() = default;
+
+    virtual bool HidePlayer(uint64_t steamId64) = 0;
+    virtual bool ShowPlayer(uint64_t steamId64) = 0;
 };
 
 /**
@@ -196,7 +220,7 @@ inline std::string BuildFixConfigDefaults(const std::vector<std::unique_ptr<CFix
             start = end + 1;
         }
 
-        text += std::string("    \"") + fix.GetName() + "\": {\n        \"enable\": true";
+        text += std::string("    \"") + fix.GetName() + "\": {\n        \"enable\": " + (fix.EnabledByDefault() ? "true" : "false");
 
         // The body without its blank first and last lines (a raw string's).
         std::string body = fix.GetConfigDefaults();

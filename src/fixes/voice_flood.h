@@ -35,8 +35,9 @@
 // A client can send clc_VoiceData that is malformed (no audio, a sender that
 // isn't them, an unknown format, packets announced with no data) or simply
 // huge, and the engine does the work of handling every one of them. Those
-// messages are dropped in CServerSideClient::ProcessVoiceData before the
-// engine sees them, and every client is held to a rolling one-second budget
+// messages are dropped in the core's client-message hook (the engine's
+// pre-filter of what a client sends) before the engine handles them, and every
+// client is held to a rolling one-second budget
 // of voice work. Nobody is kicked; a dropped message is just never played.
 #pragma once
 
@@ -61,8 +62,8 @@ public:
     void OnStartupServer(StartupServerContext& ctx) override;
 
 private:
-    // CServerSideClient::ProcessVoiceData (engine2 vtable slot), Pre.
-    HookReturn<void> OnProcessVoiceData(FunctionContext& ctx, bool post);
+    // Every message a client sends; only clc_VoiceData is looked at.
+    Action OnClientMessage(CPlayerSlot slot, int nMessageId, void* pMessage);
 
     // What one voice message cost, and when (GameTime()).
     struct Work

@@ -59,30 +59,19 @@ const char* CVoiceFloodFix::GetDescription() const
 
 bool CVoiceFloodFix::Load(char* error, size_t maxlen)
 {
-    // An engine class with no interface to fetch and no instance at load time:
-    // the vtable is resolved by RTTI name and the hook covers every client sharing it.
-    int nSlot;
-    if (!FindOffset("CServerSideClientBase::ProcessVoiceData", nSlot, error, maxlen))
-        return false;
-
-    // bool CServerSideClient::ProcessVoiceData(const CNetMessagePB<CCLCMsg_VoiceData>& msg): this, msg
-    static const Source2ModType kParams[] = { Source2ModType::Pointer, Source2ModType::Pointer };
-    const FunctionTypes types{ Source2ModType::Bool, kParams, 2, true };
-
-    ISource2ModFunction* pFunction = g_pSource2ModFunctions->FromVirtualTable(g_PluginID, "engine2", "CServerSideClient", nSlot, types);
-    if (!pFunction)
+    if (!g_pSource2ModNetworkMessages || !g_pSource2ModClients)
     {
-        std::snprintf(error, maxlen, "CServerSideClient vtable not found");
+        std::snprintf(error, maxlen, "the core has no network messages / clients interface: update Source2Mod");
         return false;
     }
 
-    if (!Hook(HookPoint::Function(pFunction), HookTarget::All(), { this, &CVoiceFloodFix::OnProcessVoiceData }))
+    if (!HookClientMessage({ this, &CVoiceFloodFix::OnClientMessage }))
     {
-        std::snprintf(error, maxlen, "could not hook CServerSideClient::ProcessVoiceData");
+        std::snprintf(error, maxlen, "could not hook the clients' messages");
         return false;
     }
 
-    Log("hooked CServerSideClient::ProcessVoiceData (vtable slot %d)", nSlot);
+    Log("watching clc_VoiceData through the core's client message hook");
     return true;
 }
 
@@ -105,27 +94,29 @@ void CVoiceFloodFix::OnStartupServer(StartupServerContext& ctx)
     m_bLoggedFirstDrop = false;
 }
 
-HookReturn<void> CVoiceFloodFix::OnProcessVoiceData(FunctionContext& ctx, bool post)
+Action CVoiceFloodFix::OnClientMessage(CPlayerSlot slot, int nMessageId, void* pMessage)
 {
-    GF_VPROF("GameFixes::voice_flood::ProcessVoiceData");
+    if (nMessageId != clc_VoiceData || !pMessage)
+        return Action::Ignore;
 
-    auto* pThis = ctx.GetArg<CServerSideClientBase*>(0);
-    const auto* pMsg = ctx.GetArg<const CNetMessagePB<CCLCMsg_VoiceData>*>(1);
+    GF_VPROF("GameFixes::voice_flood::ClientMessage");
 
-    // Nothing to check without a message: let the engine have it as it is.
-    if (!pMsg || !ShouldDrop(pThis, *pMsg))
+    // The handle is the protobuf message; the voice message is its derived type.
+    const auto& msg = *static_cast<const CCLCMsg_VoiceData*>(static_cast<const google::protobuf::Message*>(pMessage));
+    auto* pClient = reinterpret_cast<CServerSideClientBase*>(g_pSource2ModClients->GetServerSideClient(slot));
+
+    // Nothing to check without a client: let the engine have it as it is.
+    if (!ShouldDrop(pClient, msg))
         return Action::Ignore;
 
     m_nDropped++;
     if (!m_bLoggedFirstDrop)
     {
         m_bLoggedFirstDrop = true;
-        Log("dropped a voice message from slot %d", pThis->m_nClientSlot.Get());
+        Log("dropped a voice message from slot %d", slot.Get());
     }
 
-    // Answered true, so the engine doesn't count the client as broken; the
-    // message just never reaches the voice system.
-    ctx.SetReturn<bool>(true);
+    // The message just never reaches the voice system; nobody is kicked.
     return Action::Supersede;
 }
 

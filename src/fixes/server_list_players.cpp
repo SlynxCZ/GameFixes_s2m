@@ -34,6 +34,8 @@
 
 #include "server_list_players.h"
 
+#include <cstdlib>
+
 #include <source2mod/sdk/schema/classes/CBasePlayerController.h>
 
 #include <gameentitysystem.h>
@@ -45,6 +47,16 @@ void CServerListPlayersFix::ReadConfig(const FixConfig& config)
 
     if (m_flUpdateInterval < 1.0f)
         m_flUpdateInterval = 1.0f;
+
+    m_ConfigHidden.clear();
+    for (const auto& [label, id] : config.GetStringMap("hide"))
+    {
+        const uint64_t steamId64 = std::strtoull(id.c_str(), nullptr, 10);
+        if (steamId64)
+            m_ConfigHidden.insert(steamId64);
+    }
+
+    m_Hidden = m_ConfigHidden;
 }
 
 bool CServerListPlayersFix::Load(char* error, size_t maxlen)
@@ -90,6 +102,22 @@ bool CServerListPlayersFix::Load(char* error, size_t maxlen)
 void CServerListPlayersFix::Unload()
 {
     m_bSteamAPIReady = false;
+    m_Hidden.clear();
+}
+
+bool CServerListPlayersFix::HidePlayer(uint64_t steamId64)
+{
+    return steamId64 != 0 && m_Hidden.insert(steamId64).second;
+}
+
+bool CServerListPlayersFix::ShowPlayer(uint64_t steamId64)
+{
+    // What the config hides stays hidden: it is the server's rule, a plugin
+    // only takes back what it hid itself.
+    if (m_ConfigHidden.count(steamId64))
+        return false;
+
+    return m_Hidden.erase(steamId64) != 0;
 }
 
 void CServerListPlayersFix::UpdatePlayers()
@@ -113,6 +141,9 @@ void CServerListPlayersFix::UpdatePlayers()
 
         const CSteamID* pSteamId = g_pEngineServer->GetClientSteamID(slot);
         if (!pSteamId)
+            continue;
+
+        if (!m_Hidden.empty() && m_Hidden.count(pSteamId->ConvertToUint64()))
             continue;
 
         auto* pController = static_cast<CBasePlayerController*>(pEntitySystem->GetEntityInstance(CEntityIndex(i + 1)));

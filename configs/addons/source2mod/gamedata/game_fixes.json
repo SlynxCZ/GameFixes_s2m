@@ -1,1 +1,108 @@
-{}
+{
+  "BotQuota::SelectAndKickBot": {
+    "signatures": {
+      "library": "server",
+      "windows": "48 89 5C 24 18 55 56 57 41 56 41 57 48 8B EC 48 83 EC 50 8B F9 89 4D 38 48 8D 4D 38 C7 45 3C 01 00 00 00 48 8D 55 E8 E8 ? ? ? ?",
+      "linux": "55 48 89 E5 41 57 41 56 41 55 41 89 FD 41 54 53 48 83 EC 58 4C 8D 25 ? ? ? ? 89 7D A0 C7 45 90 00 00 00 00 C7 45 A4 01 00 00 00 49 8B 04 24 8B 50 10 85"
+    },
+    "function": {
+      "return": "bool",
+      "params": [
+        "int32"
+      ]
+    }
+  },
+  "BotQuota::TeamCandidate": {
+    "signatures": {
+      "library": "server",
+      "windows": "48 85 D2 74 0E 0F B6 82 ? ? ? ? 39 01 74 03 32 C0 C3 4D 85 C0 74 0E 41 0F B6 80 ? ? ? ? 39 01 0F 94 C0 C3 B0 01 C3",
+      "linux": "48 85 F6 74 13 0F B6 8E ? ? ? ? 31 C0 39 0F 74 06 C3 0F 1F 44 00 00 B8 01 00 00 00 48 85 D2 74 F0 0F B6 82 ? ? ? ? 39 07 0F 94 C0 C3"
+    },
+    "function": {
+      "return": "bool",
+      "params": [
+        "pointer",
+        "pointer",
+        "pointer"
+      ]
+    }
+  },
+  "CBeam::SetBeamEndPos": {
+    "signatures": {
+      "library": "server",
+      "windows": "48 8B C4 48 89 58 ? 57 48 81 EC ? ? ? ? 0F 29 70 ? 48 8B FA 0F 29 78 ? 48 8B D9",
+      "linux": "55 48 89 E5 41 57 41 56 41 55 41 54 49 89 F4 53 48 89 FB 48 81 EC ? ? ? ? 66 0F 1F 44 00"
+    },
+    "function": {
+      "this": "entity",
+      "return": "void",
+      "params": [
+        "vector"
+      ]
+    }
+  },
+  "CBeam::SetBeamOrigin": {
+    "signatures": {
+      "library": "server",
+      "windows": "48 89 5C 24 ? 57 48 81 EC ? ? ? ? 48 8B FA 48 8B D9 E8 ? ? ? ? 48 8B CB",
+      "linux": "55 48 89 E5 41 54 49 89 F4 53 48 89 FB 48 83 EC ? 0F 1F 80"
+    },
+    "function": {
+      "this": "entity",
+      "return": "void",
+      "params": [
+        "vector"
+      ]
+    }
+  },
+  "CCSGameRules::sm_mapGcBanInformation": {
+    "signatures": {
+      "library": "server",
+      "windows": "48 8D 0D ? ? ? ? 45 33 C0 4C 89 74 24",
+      "linux": "48 8D 35 ? ? ? ? 89 C2 48 63 46"
+    }
+  },
+  "CEntitySystem::CreateEntityFromKeyValues": {
+    "signatures": {
+      "library": "server",
+      "windows": "40 56 57 41 56 41 57 48 81 EC 98 00 00 00",
+      "linux": "55 48 8D 05 ? ? ? ? 48 89 E5 41 57 4C 8D 7D ? 41 56 49 89 F6"
+    },
+    "function": {
+      "this": "pointer",
+      "return": "entity",
+      "params": [
+        "pointer",
+        "int32"
+      ]
+    }
+  },
+  "CServerSideClientBase::Disconnect": {
+    "offsets": {
+      "windows": 7,
+      "linux": 8
+    }
+  },
+  "GameSystem_Think_CheckSteamBan": {
+    "signatures": {
+      "library": "server",
+      "windows": "41 54 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 44 8B 60 58",
+      "linux": "55 48 89 E5 41 57 41 56 41 55 41 54 53 48 83 EC ? 48 8B 05 ? ? ? ? 44 8B 68 ? 45 85 ED 0F 8E ? ? ? ? 8B 15"
+    },
+    "function": {
+      "return": "void",
+      "params": []
+    }
+  },
+  "SetSchemaHammerUniqueId": {
+    "signatures": {
+      "library": "server",
+      "windows": "75 ? 48 8B 03 48 8B CB FF 90 ? ? ? ? 84 C0 74 ? 48 8D 05",
+      "linux": "75 ? 48 8B 03 48 89 DF FF 90 ? ? ? ? 84 C0 74 ? 48 8D 05"
+    },
+    "patches": {
+      "windows": "EB",
+      "linux": "EB"
+    }
+  }
+}

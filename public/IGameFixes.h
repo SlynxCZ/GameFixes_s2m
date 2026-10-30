@@ -39,7 +39,10 @@
 
 #include <cstdint>
 
-#define GAMEFIXES_INTERFACE_VERSION "IGameFixes001"
+#define GAMEFIXES_INTERFACE_VERSION "IGameFixes002"
+// The first revision (steam_ban only) is the same object with the first two
+// methods below: a plugin built against it keeps working.
+#define GAMEFIXES_INTERFACE_VERSION_001 "IGameFixes001"
 
 // What other plugins can ask of GameFixes. From a Source2Mod plugin, once every
 // plugin is loaded (OnAllSource2ModPluginsLoaded), treating null as "no GameFixes":
@@ -62,6 +65,14 @@ public:
 	// HTTP) can still allow them in time.
 	virtual bool SteamBanAllowAccount(uint64_t steamId64) = 0;
 	virtual bool SteamBanDisallowAccount(uint64_t steamId64) = 0;
+
+	// server_list_players: the account is left out of what is pushed to Steam's
+	// server list (a hidden admin, a spectator bot, ...) from the next push on,
+	// until ServerListPlayersShow or a plugin reload. Steam keeps what it was
+	// last given for a player until they disconnect, so hide an account before
+	// its first push (when it connects) rather than after.
+	virtual bool ServerListPlayersHide(uint64_t steamId64) = 0;
+	virtual bool ServerListPlayersShow(uint64_t steamId64) = 0;
 };
 
 #endif // _INCLUDE_GAMEFIXES_IFACE_H_

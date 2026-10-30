@@ -43,6 +43,7 @@
 // One include per fix, alphabetical, as they are ported:
 #include "fixes/abstract_entity.h"
 #include "fixes/beam_crash.h"
+#include "fixes/cstv_bot_quota.h"
 #include "fixes/demo_record.h"
 #include "fixes/hammer_id.h"
 #include "fixes/input_activator_crash.h"
@@ -96,9 +97,9 @@ bool GameFixesPlugin::Load(PluginId id, ISource2ModAPI* api, char* error, size_t
     if (!m_fixes.empty())
     {
         // After the game's frame: the fixes only read it.
-        m_hookIds.push_back(g_pSource2ModHooks->Hook(HookPoint::GameFrame, HookTarget::All(), { this, &GameFixesPlugin::OnGameFrame }, true));
+        g_pSource2ModHooks->Hook(HookPoint::GameFrame, HookTarget::All(), { this, &GameFixesPlugin::OnGameFrame }, true);
         // Before the engine reads the session configuration, so a fix can still edit it.
-        m_hookIds.push_back(g_pSource2ModHooks->Hook(HookPoint::StartupServer, HookTarget::All(), { this, &GameFixesPlugin::OnStartupServer }, false));
+        g_pSource2ModHooks->Hook(HookPoint::StartupServer, HookTarget::All(), { this, &GameFixesPlugin::OnStartupServer }, false);
     }
 
     GF_Log("%zu fix(es) loaded", m_fixes.size());
@@ -107,36 +108,24 @@ bool GameFixesPlugin::Load(PluginId id, ISource2ModAPI* api, char* error, size_t
 
 bool GameFixesPlugin::Unload(char* error, size_t maxlen)
 {
-    // The hooks and timers are dropped by the core after this returns anyway;
-    // the fixes' own go first so a fix never runs once it is unloaded.
-    for (const Source2ModHookId id : m_hookIds)
-    {
-        if (id)
-            g_pSource2ModHooks->Unhook(id);
-    }
-    m_hookIds.clear();
-
+    // Hooks, event and convar hooks and timers are dropped by the core after
+    // this returns; what it cannot undo is a fix's own change (a code patch).
     for (auto it = m_fixes.rbegin(); it != m_fixes.rend(); ++it)
-    {
         (*it)->Unload();
-        (*it)->ReleaseResources();
-    }
     m_fixes.clear();
 
     return true;
 }
 
 /*
- * One line per fix, alphabetical -- the ported ones. To come (from GameFixes_mm):
- *   abstract_entity, beam_crash, demo_record, hammer_id, input_activator_crash,
- *   rampbug, server_list_players, slow_animation, steam_ban, sv_cheats,
- *   team_limit, voice_flood, water_jump
+ * One line per fix, alphabetical.
  */
 std::vector<std::unique_ptr<CFix>> GameFixesPlugin::CreateFixes()
 {
     std::vector<std::unique_ptr<CFix>> fixes;
     fixes.push_back(std::make_unique<CAbstractEntityFix>());
     fixes.push_back(std::make_unique<CBeamCrashFix>());
+    fixes.push_back(std::make_unique<CCstvBotQuotaFix>());
     fixes.push_back(std::make_unique<CDemoRecordFix>());
     fixes.push_back(std::make_unique<CHammerIdFix>());
     fixes.push_back(std::make_unique<CInputActivatorCrashFix>());
@@ -255,7 +244,7 @@ void* GameFixesPlugin::OnSource2ModQuery(const char* iface, int* ret)
     if (!iface)
         return nullptr;
 
-    if (!std::strcmp(iface, GAMEFIXES_INTERFACE_VERSION))
+    if (!std::strcmp(iface, GAMEFIXES_INTERFACE_VERSION) || !std::strcmp(iface, GAMEFIXES_INTERFACE_VERSION_001))
     {
         if (ret) *ret = SOURCE2MOD_IFACE_OK;
         return static_cast<IGameFixes*>(this);
@@ -276,6 +265,18 @@ bool GameFixesPlugin::SteamBanDisallowAccount(uint64_t steamId64)
 {
     auto* pControl = dynamic_cast<ISteamBanControl*>(FindFix("steam_ban"));
     return pControl && pControl->DisallowAccount(steamId64);
+}
+
+bool GameFixesPlugin::ServerListPlayersHide(uint64_t steamId64)
+{
+    auto* pControl = dynamic_cast<IServerListPlayersControl*>(FindFix("server_list_players"));
+    return pControl && pControl->HidePlayer(steamId64);
+}
+
+bool GameFixesPlugin::ServerListPlayersShow(uint64_t steamId64)
+{
+    auto* pControl = dynamic_cast<IServerListPlayersControl*>(FindFix("server_list_players"));
+    return pControl && pControl->ShowPlayer(steamId64);
 }
 
 const char* GameFixesPlugin::GetAuthor()

@@ -65,6 +65,8 @@ public:
     // IGameFixes
     bool SteamBanAllowAccount(uint64_t steamId64) override;
     bool SteamBanDisallowAccount(uint64_t steamId64) override;
+    bool ServerListPlayersHide(uint64_t steamId64) override;
+    bool ServerListPlayersShow(uint64_t steamId64) override;
 
     const char* GetAuthor() override;
     const char* GetName() override;
@@ -83,7 +85,6 @@ private:
 
     /// Every fix at first, then the ones game_fixes.json turned on, then (after LoadFixes()) the ones that loaded.
     std::vector<std::unique_ptr<CFix>> m_fixes;
-    std::vector<Source2ModHookId> m_hookIds;
 };
 
 extern GameFixesPlugin g_Plugin;
