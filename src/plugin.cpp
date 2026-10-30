@@ -41,7 +41,8 @@
 #include <string>
 
 // One include per fix, alphabetical, as they are ported:
-// (none yet)
+#include "fixes/rampbug.h"
+#include "fixes/water_jump.h"
 
 GameFixesPlugin g_Plugin;
 SOURCE2MOD_EXPOSE(PLUGIN_NAME, g_Plugin);
@@ -123,6 +124,8 @@ bool GameFixesPlugin::Unload(char* error, size_t maxlen)
 std::vector<std::unique_ptr<CFix>> GameFixesPlugin::CreateFixes()
 {
     std::vector<std::unique_ptr<CFix>> fixes;
+    fixes.push_back(std::make_unique<CRampbugFix>());
+    fixes.push_back(std::make_unique<CWaterJumpFix>());
     return fixes;
 }
 
