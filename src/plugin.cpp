@@ -45,10 +45,12 @@
 #include "fixes/beam_crash.h"
 #include "fixes/hammer_id.h"
 #include "fixes/input_activator_crash.h"
+#include "fixes/rampbug.h"
 #include "fixes/server_list_players.h"
 #include "fixes/slow_animation.h"
 #include "fixes/sv_cheats.h"
 #include "fixes/team_limit.h"
+#include "fixes/water_jump.h"
 
 GameFixesPlugin g_Plugin;
 SOURCE2MOD_EXPOSE(PLUGIN_NAME, g_Plugin);
@@ -134,10 +136,12 @@ std::vector<std::unique_ptr<CFix>> GameFixesPlugin::CreateFixes()
     fixes.push_back(std::make_unique<CBeamCrashFix>());
     fixes.push_back(std::make_unique<CHammerIdFix>());
     fixes.push_back(std::make_unique<CInputActivatorCrashFix>());
+    fixes.push_back(std::make_unique<CRampbugFix>());
     fixes.push_back(std::make_unique<CServerListPlayersFix>());
     fixes.push_back(std::make_unique<CSlowAnimationFix>());
     fixes.push_back(std::make_unique<CSvCheatsFix>());
     fixes.push_back(std::make_unique<CTeamLimitFix>());
+    fixes.push_back(std::make_unique<CWaterJumpFix>());
     return fixes;
 }
 
