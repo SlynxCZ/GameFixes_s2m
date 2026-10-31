@@ -40,9 +40,6 @@
 #include <cstdint>
 
 #define GAMEFIXES_INTERFACE_VERSION "IGameFixes002"
-// The first revision (steam_ban only) is the same object with the first two
-// methods below: a plugin built against it keeps working.
-#define GAMEFIXES_INTERFACE_VERSION_001 "IGameFixes001"
 
 // What other plugins can ask of GameFixes. From a Source2Mod plugin, once every
 // plugin is loaded (OnAllSource2ModPluginsLoaded), treating null as "no GameFixes":

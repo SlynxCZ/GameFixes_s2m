@@ -31,7 +31,7 @@
  *
  * Project: GameFixes_s2m
  */
-// What every fix looks like to the plugin -- see PORTING.md for how to write one.
+// What every fix looks like to the plugin.
 #pragma once
 
 #include "common.h"
@@ -92,7 +92,7 @@ public:
 
     /// Forwarded from the plugin's one shared StartupServer hook (pre): a new
     /// map's server is about to come up. The session configuration is still
-    /// editable here -- see PORTING.md.
+    /// editable here.
     virtual void OnStartupServer(StartupServerContext& ctx) {}
 
     /// Forwarded from the plugin's one shared GameFrame hook (post).
@@ -121,7 +121,7 @@ protected:
     }
 
     /// g_pSource2ModEvents->HookGameEvent(), id remembered. 0 for an event the
-    /// game does not have (yet -- see PORTING.md).
+    /// game does not have (yet).
     Source2ModEventHookId HookEvent(const char* pszEvent, GameEventHandler handler, bool post = false);
 
     /// g_pSource2ModConVars->HookConVarChange() (every ConVar's changes; compare

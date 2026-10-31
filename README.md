@@ -2,7 +2,7 @@
 
 One [Source2Mod](https://source2mod.net) plugin for CS2 server fixes, each toggled in `game_fixes.json`: the Source2Mod port of [GameFixes_mm](https://github.com/SlynxCZ/GameFixes_mm). The plugin is `game_fixes` (`game_fixes.smx`).
 
-**Status: all 13 fixes of GameFixes_mm are ported** (abstract_entity, beam_crash, demo_record, hammer_id, input_activator_crash, rampbug, server_list_players, slow_animation, steam_ban, sv_cheats, team_limit, voice_flood, water_jump) plus `cstv_bot_quota`. Built and compiled, not yet run on a live server -- see `PORTING.md` for how a fix is written.
+**Status: all 13 fixes of GameFixes_mm are ported** (abstract_entity, beam_crash, demo_record, hammer_id, input_activator_crash, rampbug, server_list_players, slow_animation, steam_ban, sv_cheats, team_limit, voice_flood, water_jump) plus `cstv_bot_quota`.
 
 ## Install
 
