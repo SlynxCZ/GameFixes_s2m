@@ -10,7 +10,7 @@ Drop `addons/source2mod/plugins/game_fixes.smx` and `addons/source2mod/gamedata/
 
 ## For other plugins
 
-`public/gamefixes/IGameFixes.h` (`IGameFixes001`: `SteamBanAllowAccount` / `SteamBanDisallowAccount`):
+`public/gamefixes/IGameFixes.h` (`IGameFixes002`: `SteamBanAllowAccount` / `SteamBanDisallowAccount`, `ServerListPlayersHide` / `ServerListPlayersShow`):
 
 ```cpp
 #include "gamefixes/IGameFixes.h"
