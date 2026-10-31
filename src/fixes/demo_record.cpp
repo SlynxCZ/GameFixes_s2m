@@ -40,8 +40,9 @@
 
 const char* CDemoRecordFix::GetDescription() const
 {
-    return "With tv_enable 1: keeps the GOTV client from being disconnected and reserves its slot on top of\n"
-           "the session's maxplayers, so the demo keeps recording across match restarts on the same map.";
+    return "With tv_enable 1: a kick of the GOTV client is held back while somebody is on the server (a shutdown and\n"
+           "a kick on an empty server go through), and its slot is reserved on top of the session's maxplayers, so\n"
+           "the demo keeps recording across match restarts on the same map.";
 }
 
 bool CDemoRecordFix::Load(char* error, size_t maxlen)
@@ -82,6 +83,12 @@ bool CDemoRecordFix::IsTvEnabled()
 
 void CDemoRecordFix::OnStartupServer(StartupServerContext& ctx)
 {
+    if (m_nBlocked > 1)
+        Log("%u GOTV kicks blocked on the last map", m_nBlocked);
+
+    m_nBlocked = 0;
+    m_bLoggedReleased = false;
+
     const bool bTvEnabled = IsTvEnabled();
     const uint32 nMaxClients = ctx.config->max_clients();
 
@@ -98,6 +105,27 @@ void CDemoRecordFix::OnStartupServer(StartupServerContext& ctx)
     const_cast<GameSessionConfiguration_t&>(*ctx.config).set_max_clients(nMaxClients + 1);
 }
 
+bool CDemoRecordFix::AnyHumanConnected() const
+{
+    CGlobalVars* pGlobals = g_pEngineServer->GetServerGlobals();
+    if (!pGlobals)
+        return true;
+
+    for (int i = 0; i < pGlobals->maxClients; i++)
+    {
+        const CPlayerSlot slot(i);
+        if (!g_pSource2ModClients->IsConnected(slot))
+            continue;
+
+        // The GOTV client and the bots are clients too, but nobody to record for.
+        const auto* pClient = reinterpret_cast<const CServerSideClientBase*>(g_pSource2ModClients->GetServerSideClient(slot));
+        if (pClient && !pClient->IsFakeClient() && !pClient->m_bIsHLTV)
+            return true;
+    }
+
+    return false;
+}
+
 HookReturn<void> CDemoRecordFix::OnDisconnect(FunctionContext& ctx, bool post)
 {
     GF_VPROF("GameFixes::demo_record::Disconnect");
@@ -109,15 +137,39 @@ HookReturn<void> CDemoRecordFix::OnDisconnect(FunctionContext& ctx, bool post)
     const int nReason = ctx.GetArg<int>(1);
     const char* pszInternalReason = ctx.GetArg<const char*>(2);
 
-    if (IsTvEnabled())
+    if (!IsTvEnabled())
     {
-        Log("GOTV is enabled, blocking the GOTV client's disconnect (tv_enable is 1, reason %d, \"%s\")", nReason,
+        // Something turned tv_enable off before the GOTV client went: let it go.
+        Log("GOTV client disconnecting with tv_enable 0, not blocked (reason %d, \"%s\")", nReason,
             pszInternalReason ? pszInternalReason : "");
-        return Action::Supersede;
+        return Action::Ignore;
     }
 
-    // Something turned tv_enable off before the GOTV client went: let it go.
-    Log("GOTV client disconnecting with tv_enable 0, not blocked (reason %d, \"%s\")", nReason,
-        pszInternalReason ? pszInternalReason : "");
-    return Action::Ignore;
+    // Only a kick is held back -- what a match restart does to the GOTV client, or bot_quota
+    // taking it for a bot. A shutdown, HLTVSTOP, the server exiting and the like are the
+    // engine tearing the client down, and it has to be able to finish that.
+    if (nReason != NETWORK_DISCONNECT_KICKED)
+        return Action::Ignore;
+
+    // Nobody left to record for: the engine kicks the GOTV client again and again, and
+    // holding it back only keeps that going. It is let go and comes back with the next match.
+    if (!AnyHumanConnected())
+    {
+        if (!m_bLoggedReleased)
+        {
+            m_bLoggedReleased = true;
+            Log("no player on the server, the GOTV client's kick is not blocked (reason %d, \"%s\")", nReason,
+                pszInternalReason ? pszInternalReason : "");
+        }
+        return Action::Ignore;
+    }
+
+    m_nBlocked++;
+    if (m_nBlocked == 1)
+    {
+        Log("GOTV is enabled, blocking the GOTV client's kick (tv_enable is 1, reason %d, \"%s\"); the next ones on this map are only counted",
+            nReason, pszInternalReason ? pszInternalReason : "");
+    }
+
+    return Action::Supersede;
 }

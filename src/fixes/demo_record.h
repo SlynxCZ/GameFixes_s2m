@@ -32,11 +32,12 @@
  * Project: GameFixes_s2m
  */
 
-// With tv_enable 1 the GOTV client is never let go: its
-// CServerSideClient::Disconnect is superseded and the session's maxplayers is
-// raised by one at StartupServer (Pre, so the config is still editable), so
-// the slot is its own and the demo keeps recording across match restarts on
-// the same map.
+// With tv_enable 1 the GOTV client is not let go by a kick while somebody is on
+// the server: its CServerSideClient::Disconnect is superseded (only for a kick;
+// a shutdown and the like go through, and so does a kick on an empty server),
+// and the session's maxplayers is raised by one at StartupServer (Pre, so the
+// config is still editable), so the slot is its own and the demo keeps
+// recording across match restarts on the same map.
 #pragma once
 
 #include "fix.h"
@@ -62,5 +63,13 @@ private:
     // extra slot are no-ops while it's off.
     bool IsTvEnabled();
 
+    // A connected client that is neither a bot nor the GOTV client.
+    bool AnyHumanConnected() const;
+
     uint16 m_nTvEnable = SOURCE2MOD_INVALID_CONVAR_INDEX;
+
+    // Kicks held back on this map (only the first is logged), and whether the
+    // "empty server" release has been logged.
+    uint32 m_nBlocked = 0;
+    bool m_bLoggedReleased = false;
 };
