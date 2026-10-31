@@ -75,6 +75,7 @@ bool GameFixesPlugin::Load(ISource2ModAPI* api, char* error, size_t maxlen, bool
 
     // OnSource2ModQuery.
     api->AddListener(this);
+    RegisterGameFixesNatives();
 
     m_fixes = CreateFixes();
 

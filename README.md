@@ -10,10 +10,10 @@ Drop `addons/source2mod/plugins/game_fixes.smx` and `addons/source2mod/gamedata/
 
 ## For other plugins
 
-`public/IGameFixes.h` (`IGameFixes001`: `SteamBanAllowAccount` / `SteamBanDisallowAccount`):
+`public/gamefixes/IGameFixes.h` (`IGameFixes001`: `SteamBanAllowAccount` / `SteamBanDisallowAccount`):
 
 ```cpp
-#include "IGameFixes.h"
+#include "gamefixes/IGameFixes.h"
 
 IGameFixes* g_pGameFixes = nullptr;
 
@@ -43,3 +43,13 @@ A line appended to `pushbuild.txt` on `main` makes the CI cut the next tag and p
 ## License
 
 GPLv3, with the same linking exception as Source2Mod. See `LICENSE`.
+
+## SourcePawn
+
+```sourcepawn
+#include <gamefixes/gamefixes>
+
+GameFixes.ServerListPlayersHide("76561197960287930");
+```
+
+To compile against it, add this repo's `public/scripting` to spcomp's include paths, or use the `scripting/include` folder that comes with a release.

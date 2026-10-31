@@ -34,7 +34,7 @@
 #pragma once
 
 #include "common.h"
-#include "IGameFixes.h"
+#include "gamefixes/IGameFixes.h"
 
 #include <memory>
 #include <vector>
@@ -88,3 +88,5 @@ private:
 };
 
 extern GameFixesPlugin g_Plugin;
+
+void RegisterGameFixesNatives();

@@ -35,3 +35,10 @@ for sdk_target in MMSPlugin.sdk_targets:
 		)
 
 	AddConfigs(sdk['name'])
+
+	# What scripts include to call this plugin.
+	include_path = os.path.join(sdk['name'], 'addons', 'source2mod', 'scripting', 'include', 'gamefixes')
+	builder.AddFolder(include_path)
+	includes = os.path.join(builder.sourcePath, 'public', 'scripting', 'gamefixes')
+	for f in sorted(os.listdir(includes)):
+		builder.AddCopy(os.path.join(includes, f), os.path.join(include_path, f))
