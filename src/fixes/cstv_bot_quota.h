@@ -38,8 +38,8 @@
 // normally. While the engine selects a bot to remove, this fix rejects the HLTV
 // controller as a candidate, so the selection goes on to an ordinary bot.
 // Bot settings, explicit kicks and map changes are left alone. (A port of
-// SwiftlyS2-Plugins/Fixes' "CSTV removed by bot quota"; a server without bots
-// does not need it, hence off by default.)
+// SwiftlyS2-Plugins/Fixes' "CSTV removed by bot quota". The quota is maintained
+// on every server, also with bot_quota 0 and no bots, so it is on by default.)
 #pragma once
 
 #include "fix.h"
@@ -51,10 +51,9 @@ public:
     const char* GetDescription() const override
     {
         return "Keeps the SourceTV client out of bot_quota's bot removal (bot_quota_mode fill),\n"
-               "so automatic bot management no longer kicks it and stops the demo recording.\n"
-               "Off by default: a server without bots does not need it.";
+               "so the engine no longer takes it for a bot and kicks it over and over, which stops the\n"
+               "demo recording. The quota runs on every server, also with bot_quota 0 and no bots.";
     }
-    bool EnabledByDefault() const override { return false; }
 
     bool Load(char* error, size_t maxlen) override;
     void Unload() override;
