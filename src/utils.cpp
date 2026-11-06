@@ -39,12 +39,7 @@
 #include <cstdio>
 #include <cstring>
 
-#ifdef _WIN32
-#include <windows.h>
-#else
-#include <sys/mman.h>
-#include <unistd.h>
-#endif
+#include "khook/memory.hpp"
 
 void GF_Log(const char* pszFormat, ...)
 {
@@ -109,34 +104,21 @@ bool WriteCode(void* address, const void* pBytes, std::size_t len)
     if (!address || !pBytes || !len)
         return false;
 
+    using namespace KHook::Memory;
+
+    if (!SetAccess(address, len, READ | WRITE | EXECUTE))
+        return false;
+
+    std::memcpy(address, pBytes, len);
 #ifdef _WIN32
-    DWORD oldProtect = 0;
-    if (!VirtualProtect(address, len, PAGE_EXECUTE_READWRITE, &oldProtect))
-        return false;
-
-    std::memcpy(address, pBytes, len);
     FlushInstructionCache(GetCurrentProcess(), address, len);
-
-    DWORD ignored = 0;
-    VirtualProtect(address, len, oldProtect, &ignored);
-    return true;
-#else
-    // Linux has no mprotect() query to read the old flags back. Code is
-    // read + execute (a vtable would be read only, but a patch is never one),
-    // so the window goes RWX -> RX.
-    const auto pageSize = static_cast<std::uintptr_t>(sysconf(_SC_PAGESIZE));
-    const auto begin = reinterpret_cast<std::uintptr_t>(address);
-    const std::uintptr_t pageStart = begin & ~(pageSize - 1);
-    const std::uintptr_t pageEnd = (begin + len + pageSize - 1) & ~(pageSize - 1);
-    void* pPage = reinterpret_cast<void*>(pageStart);
-
-    if (mprotect(pPage, pageEnd - pageStart, PROT_READ | PROT_WRITE | PROT_EXEC) != 0)
-        return false;
-
-    std::memcpy(address, pBytes, len);
-    mprotect(pPage, pageEnd - pageStart, PROT_READ | PROT_EXEC);
-    return true;
 #endif
+
+    // SetAccess does not hand the old flags back. Code is read + execute (a
+    // vtable would be read only, but a patch is never one), so the window goes
+    // RWX -> RX.
+    SetAccess(address, len, READ | EXECUTE);
+    return true;
 }
 
 std::vector<uint8_t> ParseHexBytes(const char* pszText)
