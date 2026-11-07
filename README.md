@@ -6,7 +6,7 @@ One [Source2Mod](https://source2mod.net) plugin for CS2 server fixes, each toggl
 
 ## Install
 
-Drop `addons/source2mod/plugins/game_fixes.smx` and `addons/source2mod/gamedata/game_fixes.json` of a release next to the other Source2Mod files. On the first start Source2Mod writes `addons/source2mod/configs/Game Fixes/game_fixes.json` with one block per fix; `"enable": false` turns a fix off. The file is read when the plugin loads.
+Drop `addons/source2mod/plugins/game_fixes.smx` and `addons/source2mod/gamedata/game_fixes.json` of a release next to the other Source2Mod files. On the first start Source2Mod writes `addons/source2mod/configs/game_fixes/game_fixes.json` with one block per fix; `"enable": false` turns a fix off. The file is read when the plugin loads.
 
 ## For other plugins
 
