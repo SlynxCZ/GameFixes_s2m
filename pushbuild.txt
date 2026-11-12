@@ -6,3 +6,4 @@ SourcePawn natives for IGameFixes (gamefixes/gamefixes.inc). The C++ header move
 Rebuilt for Source2Mod plugin API 10.
 Rebuilt against the current Source2Mod SDK (ISource2ModMenus009, ISource2ModEntities006).
 Code patches change page protection through KHook's memory helpers (one path for Windows and Linux).
+CS2 14197 (2026-11-11): rebuilt against the new net message layout (s2sdk) -- the old build calls the removed INetworkMessageInternal virtuals.
