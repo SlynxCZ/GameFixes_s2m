@@ -7,3 +7,4 @@ Rebuilt for Source2Mod plugin API 10.
 Rebuilt against the current Source2Mod SDK (ISource2ModMenus009, ISource2ModEntities006).
 Code patches change page protection through KHook's memory helpers (one path for Windows and Linux).
 CS2 14197 (2026-11-11): rebuilt against the new net message layout (s2sdk) -- the old build calls the removed INetworkMessageInternal virtuals.
+sv_cheats: going off only takes players out of noclip the engine cheat command gave them; noclip/fly set by plugins (FUNPLAY /noclip, /fly) is left alone.

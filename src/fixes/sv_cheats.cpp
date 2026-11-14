@@ -39,13 +39,21 @@
 
 #include <gameentitysystem.h>
 
+#include <algorithm>
 #include <cstdlib>
 #include <cstring>
 
 bool CSvCheatsFix::Load(char* error, size_t maxlen)
 {
-    // The hook is the fix's own, the plugin takes it down on unload. It only
-    // reads and writes entity memory, no convar is set from inside it.
+    m_svCheatsIndex = g_pSource2ModConVars->GetConvarAccessIndexByName("sv_cheats");
+    if (m_svCheatsIndex == SOURCE2MOD_INVALID_CONVAR_INDEX)
+    {
+        snprintf(error, maxlen, "sv_cheats not found");
+        return false;
+    }
+
+    // The hooks are the fix's own, the plugin / Unload() take them down. They
+    // only read and write entity memory, no convar is set from inside them.
     const Source2ModConVarHookId id = HookConVarChange(
         [this](ConVarRefAbstract* pConVar, CSplitScreenSlot slot, const char* pszNewValue, const char* pszOldValue)
         {
@@ -64,34 +72,123 @@ bool CSvCheatsFix::Load(char* error, size_t maxlen)
         return false;
     }
 
+    // Post: the core runs post listeners only when no pre listener superseded
+    // the command, i.e. only when the engine's own noclip is about to run. A
+    // plugin answering "noclip" itself (FUNPLAY Core) never reaches this.
+    m_noclipHookId = g_pSource2ModCommands->HookConCommand(
+        "noclip",
+        [this](const Source2ModCommandContext& ctx, const Source2ModCommandArgs& args, bool post) -> Action
+        {
+            OnNoclipCommand(ctx.GetPlayerSlot());
+            return Action::Ignore;
+        },
+        true);
+
+    if (!m_noclipHookId)
+    {
+        snprintf(error, maxlen, "the core refused the noclip command listener");
+        return false;
+    }
+
     Log("watching sv_cheats");
     return true;
 }
 
-void CSvCheatsFix::OnSvCheatsDisabled()
+void CSvCheatsFix::Unload()
 {
-    CGameEntitySystem* pEntitySystem = GameEntitySystem();
-    CGlobalVars* pGlobals = g_pEngineServer->GetServerGlobals();
-    if (!pEntitySystem || !pGlobals)
+    if (m_noclipHookId)
+        g_pSource2ModCommands->UnhookConCommand(m_noclipHookId);
+
+    m_noclipHookId = 0;
+    m_pending.clear();
+    m_tracked.clear();
+}
+
+bool CSvCheatsFix::CheatsOn() const
+{
+    return g_pSource2ModConVars->GetBool(m_svCheatsIndex);
+}
+
+void CSvCheatsFix::OnNoclipCommand(CPlayerSlot slot)
+{
+    // Without sv_cheats the engine refuses the command; from the server
+    // console there is no player to put in noclip.
+    if (!slot.IsValid() || !CheatsOn())
         return;
 
-    int iFixed = 0;
-    for (int i = 0; i < pGlobals->maxClients; i++)
+    CGameEntitySystem* pEntitySystem = GameEntitySystem();
+    if (!pEntitySystem)
+        return;
+
+    auto* pController = static_cast<CBasePlayerController*>(pEntitySystem->GetEntityInstance(CEntityIndex(slot.Get() + 1)));
+    if (!pController || !pController->IsConnected())
+        return;
+
+    CBaseEntity* pPawn = pController->GetPawn();
+    if (!pPawn)
+        return;
+
+    // The engine runs the command right after this listener; what it did is
+    // looked at on the next frame.
+    m_pending.push_back({ pPawn->GetHandle(), pPawn->m_MoveType() });
+}
+
+void CSvCheatsFix::OnGameFrame(bool simulating)
+{
+    if (m_pending.empty() && m_tracked.empty())
+        return;
+
+    GF_VPROF("GameFixes::sv_cheats::OnGameFrame");
+
+    // Forget pawns that are gone or no longer in noclip: whatever puts them
+    // in noclip after that (a plugin's /noclip, /fly, ...) is not ours.
+    std::erase_if(m_tracked, [](const CheatNoclip& t)
     {
-        auto* pController = static_cast<CBasePlayerController*>(pEntitySystem->GetEntityInstance(CEntityIndex(i + 1)));
-        if (!pController || !pController->IsConnected())
+        CBaseEntity* pPawn = t.hPawn.Get();
+        return !pPawn || pPawn->m_MoveType() != MOVETYPE_NOCLIP;
+    });
+
+    for (const PendingNoclip& p : m_pending)
+    {
+        CBaseEntity* pPawn = p.hPawn.Get();
+        if (!pPawn)
             continue;
 
-        CBaseEntity* pPawn = pController->GetPawn();
-        if (!pPawn || (pPawn->m_MoveType() != MOVETYPE_NOCLIP && pPawn->m_nActualMoveType() != MOVETYPE_NOCLIP))
+        // A toggle off is dropped by the erase above already.
+        if (p.nMoveTypeBefore == MOVETYPE_NOCLIP || pPawn->m_MoveType() != MOVETYPE_NOCLIP)
             continue;
 
-        pPawn->m_MoveType() = MOVETYPE_WALK;
-        pPawn->m_nActualMoveType() = MOVETYPE_WALK;
-        pPawn->m_MoveType.NetworkStateChanged();
+        const bool bKnown = std::any_of(m_tracked.begin(), m_tracked.end(), [&](const CheatNoclip& t) { return t.hPawn == p.hPawn; });
+        if (!bKnown)
+            m_tracked.push_back({ p.hPawn, pPawn->m_nActualMoveType() });
+    }
+    m_pending.clear();
+}
+
+void CSvCheatsFix::OnSvCheatsDisabled()
+{
+    // A command noted this frame never ran with cheats on as far as we care.
+    m_pending.clear();
+
+    int iFixed = 0;
+    for (const CheatNoclip& t : m_tracked)
+    {
+        CBaseEntity* pPawn = t.hPawn.Get();
+
+        // Still in the very noclip the command gave it: a plugin that took the
+        // pawn over in the same frame (another actual move type) keeps it.
+        if (!pPawn || pPawn->m_MoveType() != MOVETYPE_NOCLIP || pPawn->m_nActualMoveType() != t.nActualMoveType)
+            continue;
+
+        // Both move types together (m_MoveType networked, m_nActualMoveType is
+        // what the server's movement runs on), and no leftover noclip speed.
+        pPawn->SetMoveType(MOVETYPE_WALK);
+        const Vector vecZero(0.0f, 0.0f, 0.0f);
+        pPawn->Teleport(nullptr, nullptr, &vecZero);
         iFixed++;
     }
+    m_tracked.clear();
 
     if (iFixed)
-        Log("sv_cheats went off, %d pawn(s) taken out of noclip", iFixed);
+        Log("sv_cheats went off, %d pawn(s) taken out of the cheat noclip", iFixed);
 }
